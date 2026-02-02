@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family:
+    'Inter',
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@layer components {
+  .ProseMirror {
+    min-height: 360px;
+  }
+
+  .ProseMirror p {
+    @apply text-sm leading-6 text-ink-700;
+  }
+
+  .ProseMirror h1 {
+    @apply text-3xl font-semibold text-ink-900;
+  }
+
+  .ProseMirror h2 {
+    @apply text-2xl font-semibold text-ink-900;
+  }
+
+  .ProseMirror h3 {
+    @apply text-xl font-semibold text-ink-900;
+  }
+
+  .ProseMirror ul {
+    @apply list-disc pl-6;
+  }
+
+  .ProseMirror ol {
+    @apply list-decimal pl-6;
+  }
+
+  .inline-code-group {
+    @apply inline-flex items-center gap-2 rounded-lg bg-slate-100 px-2 py-0.5 text-xs text-ink-700;
+  }
+
+  .inline-code-text {
+    @apply font-mono text-xs text-ink-700;
+  }
+
+  .inline-code-copy {
+    @apply rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-ink-500 opacity-0 transition hover:text-ink-700;
+  }
+
+  .inline-code-group:hover .inline-code-copy {
+    @apply opacity-100;
+  }
+}

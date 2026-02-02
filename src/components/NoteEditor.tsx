@@ -1,0 +1,147 @@
+import { useMemo } from 'react'
+import { EditorContent, useEditor } from '@tiptap/react'
+import { mergeAttributes } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
+import TextAlign from '@tiptap/extension-text-align'
+import Underline from '@tiptap/extension-underline'
+import Code from '@tiptap/extension-code'
+
+type NoteEditorProps = {
+  title: string
+  content: Record<string, unknown> | null
+  onTitleChange: (value: string) => void
+  onContentChange: (value: Record<string, unknown>, plainText: string) => void
+  onCopy: (message: string) => void
+}
+
+const InlineCode = Code.extend({
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'span',
+      { class: 'inline-code-group' },
+      ['code', mergeAttributes(HTMLAttributes, { class: 'inline-code-text' }), 0],
+      [
+        'button',
+        {
+          class: 'inline-code-copy',
+          type: 'button',
+          'aria-label': 'Copiar código',
+          'data-inline-code-copy': 'true',
+        },
+        'Copiar',
+      ],
+    ]
+  },
+})
+
+const NoteEditor = ({
+  title,
+  content,
+  onTitleChange,
+  onContentChange,
+  onCopy,
+}: NoteEditorProps) => {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        code: false,
+      }),
+      InlineCode,
+      Underline,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+    ],
+    content: content ?? {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }],
+    },
+    editorProps: {
+      attributes: {
+        class:
+          'min-h-[360px] rounded-xl px-4 py-3 text-sm leading-6 text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+      },
+    },
+    onUpdate: ({ editor: updatedEditor }) => {
+      onContentChange(updatedEditor.getJSON() as Record<string, unknown>, updatedEditor.getText())
+    },
+  })
+
+  const toolbar = useMemo(
+    () => [
+      { label: 'H1', action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run() },
+      { label: 'H2', action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
+      { label: 'H3', action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
+      { label: '•', action: () => editor?.chain().focus().toggleBulletList().run() },
+      { label: '1.', action: () => editor?.chain().focus().toggleOrderedList().run() },
+      { label: 'B', action: () => editor?.chain().focus().toggleBold().run() },
+      { label: 'I', action: () => editor?.chain().focus().toggleItalic().run() },
+      { label: 'U', action: () => editor?.chain().focus().toggleUnderline().run() },
+      { label: 'S', action: () => editor?.chain().focus().toggleStrike().run() },
+      { label: '</>', action: () => editor?.chain().focus().toggleCode().run() },
+      {
+        label: '↤',
+        action: () => editor?.chain().focus().setTextAlign('left').run(),
+      },
+      {
+        label: '↔',
+        action: () => editor?.chain().focus().setTextAlign('center').run(),
+      },
+    ],
+    [editor]
+  )
+
+  const handleCopyClick = async (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement
+    const button = target.closest<HTMLButtonElement>('[data-inline-code-copy]')
+    if (!button) {
+      return
+    }
+
+    const wrapper = button.parentElement
+    const codeElement = wrapper?.querySelector('code')
+    const text = codeElement?.textContent ?? ''
+
+    if (!text) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(text)
+      onCopy('Copiado!')
+    } catch {
+      onCopy('Não foi possível copiar.')
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <input
+          className="w-full text-2xl font-semibold text-ink-900 outline-none placeholder:text-ink-300"
+          placeholder="Título da nota"
+          value={title}
+          onChange={(event) => onTitleChange(event.target.value)}
+        />
+        <div className="flex flex-wrap gap-2 text-xs text-ink-500">
+          {toolbar.map((item) => (
+            <button
+              key={item.label}
+              className="rounded-lg border border-slate-200 px-2.5 py-1 text-ink-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+              type="button"
+              onClick={item.action}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6" onClick={handleCopyClick}>
+        <EditorContent editor={editor} />
+      </div>
+    </div>
+  )
+}
+
+export default NoteEditor
