@@ -10,7 +10,7 @@ build/
 out/
 coverage/
 
-# Local env files (NUNCA versionar)
+# Local env files
 .env
 .env.*
 !.env.example
