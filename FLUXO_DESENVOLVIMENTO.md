@@ -67,11 +67,18 @@
 
 ## Stage 3 — Editor robusto (TipTap) ✅
 
+**Status:** VALIDADO (toolbar aplicada com `onMouseDown` + `focus`, sem perda de seleção)
+
 - TipTap + toolbar completa:
 - H1/H2/H3, listas, bold/italic/underline/strike
 - alinhamento, inline code
 - Salvar `content_json` + gerar `content_text` para busca
 - Inline code copiável com 1 clique (como você pediu)
+
+**Checklist de validação manual (S3)**
+- Clicar nos botões da toolbar aplica formatação no editor ativo.
+- Seleção não é perdida ao clicar nos botões (sem blur).
+- Alinhamento (left/center/right/justify) aplica corretamente.
 
 ## Stage 4 — UX TDAH-friendly ✅
 
