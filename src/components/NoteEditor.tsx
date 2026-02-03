@@ -79,14 +79,10 @@ const NoteEditor = ({
       { label: 'U', action: () => editor?.chain().focus().toggleUnderline().run() },
       { label: 'S', action: () => editor?.chain().focus().toggleStrike().run() },
       { label: '</>', action: () => editor?.chain().focus().toggleCode().run() },
-      {
-        label: '↤',
-        action: () => editor?.chain().focus().setTextAlign('left').run(),
-      },
-      {
-        label: '↔',
-        action: () => editor?.chain().focus().setTextAlign('center').run(),
-      },
+      { label: '↤', action: () => editor?.chain().focus().setTextAlign('left').run() },
+      { label: '↔', action: () => editor?.chain().focus().setTextAlign('center').run() },
+      { label: '↦', action: () => editor?.chain().focus().setTextAlign('right').run() },
+      { label: '≡', action: () => editor?.chain().focus().setTextAlign('justify').run() },
     ],
     [editor]
   )
@@ -129,7 +125,11 @@ const NoteEditor = ({
               key={item.label}
               className="rounded-lg border border-slate-200 px-2.5 py-1 text-ink-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
               type="button"
-              onClick={item.action}
+              disabled={!editor}
+              onMouseDown={(event) => {
+                event.preventDefault()
+                item.action()
+              }}
             >
               {item.label}
             </button>
