@@ -30,30 +30,42 @@ body {
 @layer components {
   .ProseMirror {
     min-height: 360px;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   .ProseMirror p {
     @apply text-sm leading-6 text-ink-700;
+    margin: 0.35rem 0;
   }
 
   .ProseMirror h1 {
     @apply text-3xl font-semibold text-ink-900;
+    margin: 0.75rem 0 0.5rem;
   }
 
   .ProseMirror h2 {
     @apply text-2xl font-semibold text-ink-900;
+    margin: 0.75rem 0 0.5rem;
   }
 
   .ProseMirror h3 {
     @apply text-xl font-semibold text-ink-900;
+    margin: 0.75rem 0 0.5rem;
   }
 
   .ProseMirror ul {
     @apply list-disc pl-6;
+    margin: 0.5rem 0;
   }
 
   .ProseMirror ol {
     @apply list-decimal pl-6;
+    margin: 0.5rem 0;
+  }
+
+  .ProseMirror li {
+    margin: 0.15rem 0;
   }
 
   .inline-code-group {
