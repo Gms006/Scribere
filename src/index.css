@@ -64,8 +64,19 @@ body {
     margin: 0.5rem 0;
   }
 
+  .ProseMirror ul ul,
+  .ProseMirror ul ol,
+  .ProseMirror ol ul,
+  .ProseMirror ol ol {
+    margin: 0.35rem 0 0.35rem 1rem;
+  }
+
   .ProseMirror li {
     margin: 0.15rem 0;
+  }
+
+  .ProseMirror ul ul li::marker {
+    content: '- ';
   }
 
   .inline-code-group {
