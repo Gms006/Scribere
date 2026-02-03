@@ -1,10 +1,16 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
-import { mergeAttributes } from '@tiptap/core'
+import { Extension, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
+import Heading from '@tiptap/extension-heading'
+import BulletList from '@tiptap/extension-bullet-list'
+import OrderedList from '@tiptap/extension-ordered-list'
+import ListItem from '@tiptap/extension-list-item'
 import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import Code from '@tiptap/extension-code'
+import TextStyle from '@tiptap/extension-text-style'
+import FontFamily from '@tiptap/extension-font-family'
 
 type NoteEditorProps = {
   title: string
@@ -34,6 +40,16 @@ const InlineCode = Code.extend({
   },
 })
 
+const ListIndent = Extension.create({
+  name: 'listIndent',
+  addKeyboardShortcuts() {
+    return {
+      Tab: () => this.editor.commands.sinkListItem(ListItem.name),
+      'Shift-Tab': () => this.editor.commands.liftListItem(ListItem.name),
+    }
+  },
+})
+
 const NoteEditor = ({
   title,
   content,
@@ -41,39 +57,121 @@ const NoteEditor = ({
   onContentChange,
   onCopy,
 }: NoteEditorProps) => {
-  const editor = useEditor({
-    extensions: [
+  const [debugJson, setDebugJson] = useState<Record<string, unknown> | null>(content ?? null)
+  const [debugCan, setDebugCan] = useState<{
+    heading: boolean
+    bulletList: boolean
+    orderedList: boolean
+  } | null>(null)
+
+  const extensions = useMemo(
+    () => [
       StarterKit.configure({
         code: false,
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
       }),
+      Heading.configure({ levels: [1, 2, 3] }),
+      BulletList,
+      OrderedList,
+      ListItem,
       InlineCode,
       Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      TextStyle,
+      FontFamily.configure({
+        types: ['textStyle'],
+      }),
+      ListIndent,
     ],
-    content: content ?? {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }],
-    },
-    editorProps: {
-      attributes: {
-        class:
-          'min-h-[360px] rounded-xl px-4 py-3 text-sm leading-6 text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+    []
+  )
+
+  const editor = useEditor(
+    {
+      extensions,
+      content: content ?? {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }],
+      },
+      editorProps: {
+        attributes: {
+          class:
+            'min-h-[360px] rounded-xl px-4 py-3 text-sm leading-6 text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+        },
+      },
+      onUpdate: ({ editor: updatedEditor }) => {
+        if (import.meta.env.DEV) {
+          setDebugJson(updatedEditor.getJSON() as Record<string, unknown>)
+          setDebugCan({
+            heading: updatedEditor.can().toggleHeading({ level: 1 }),
+            bulletList: updatedEditor.can().toggleBulletList(),
+            orderedList: updatedEditor.can().toggleOrderedList(),
+          })
+        }
+        onContentChange(updatedEditor.getJSON() as Record<string, unknown>, updatedEditor.getText())
+      },
+      onCreate: ({ editor: createdEditor }) => {
+        if (import.meta.env.DEV) {
+          console.log('[NoteEditor] onCreate')
+          setDebugJson(createdEditor.getJSON() as Record<string, unknown>)
+          setDebugCan({
+            heading: createdEditor.can().toggleHeading({ level: 1 }),
+            bulletList: createdEditor.can().toggleBulletList(),
+            orderedList: createdEditor.can().toggleOrderedList(),
+          })
+        }
       },
     },
-    onUpdate: ({ editor: updatedEditor }) => {
-      onContentChange(updatedEditor.getJSON() as Record<string, unknown>, updatedEditor.getText())
+    []
+  )
+
+  useEffect(() => {
+    if (!editor || !content) {
+      return
+    }
+    editor.commands.setContent(content, false)
+  }, [editor, content])
+
+  const fontOptions = [
+    { label: 'System', value: '' },
+    { label: 'Inter', value: 'Inter' },
+    { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
+    {
+      label: 'Monospace',
+      value:
+        '"SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     },
-  })
+  ]
+  const currentFont = editor?.getAttributes('textStyle')?.fontFamily ?? ''
 
   const toolbar = useMemo(
     () => [
-      { label: 'H1', name: 'Heading 1', action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run() },
-      { label: 'H2', name: 'Heading 2', action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
-      { label: 'H3', name: 'Heading 3', action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
+      {
+        label: 'H1',
+        name: 'Heading 1',
+        action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
+      },
+      {
+        label: 'H2',
+        name: 'Heading 2',
+        action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
+      },
+      {
+        label: 'H3',
+        name: 'Heading 3',
+        action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
+      },
       { label: '•', name: 'Bullet List', action: () => editor?.chain().focus().toggleBulletList().run() },
-      { label: '1.', name: 'Ordered List', action: () => editor?.chain().focus().toggleOrderedList().run() },
+      {
+        label: '1.',
+        name: 'Ordered List',
+        action: () => editor?.chain().focus().toggleOrderedList().run(),
+      },
       { label: 'B', name: 'Bold', action: () => editor?.chain().toggleBold().run() },
       { label: 'I', name: 'Italic', action: () => editor?.chain().toggleItalic().run() },
       { label: 'U', name: 'Underline', action: () => editor?.chain().toggleUnderline().run() },
@@ -119,7 +217,33 @@ const NoteEditor = ({
           value={title}
           onChange={(event) => onTitleChange(event.target.value)}
         />
-        <div className="flex flex-wrap gap-2 text-xs text-ink-500">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
+          <label className="sr-only" htmlFor="font-family-select">
+            Fonte
+          </label>
+          <select
+            id="font-family-select"
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+            disabled={!editor}
+            value={currentFont}
+            onChange={(event) => {
+              if (!editor) {
+                return
+              }
+              const value = event.target.value
+              if (!value) {
+                editor.chain().focus().unsetFontFamily().run()
+                return
+              }
+              editor.chain().focus().setFontFamily(value).run()
+            }}
+          >
+            {fontOptions.map((option) => (
+              <option key={option.label} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           {toolbar.map((item) => (
             <button
               key={item.label}
@@ -141,6 +265,28 @@ const NoteEditor = ({
       <div className="mt-6" onClick={handleCopyClick}>
         <EditorContent editor={editor} />
       </div>
+
+      {import.meta.env.DEV && debugJson && (
+        <div className="mt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">Debug JSON</p>
+          <pre className="mt-2 max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] text-ink-600">
+            {JSON.stringify(debugJson, null, 2)}
+          </pre>
+          {debugCan && (
+            <pre className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] text-ink-600">
+              {JSON.stringify(
+                {
+                  canToggleHeading: debugCan.heading,
+                  canToggleBulletList: debugCan.bulletList,
+                  canToggleOrderedList: debugCan.orderedList,
+                },
+                null,
+                2
+              )}
+            </pre>
+          )}
+        </div>
+      )}
     </div>
   )
 }

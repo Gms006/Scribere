@@ -67,17 +67,29 @@
 
 ## Stage 3 — Editor robusto (TipTap) ✅
 
-**Status:** VALIDADO (toolbar aplicada com `onMouseDown` + `focus`, sem perda de seleção)
+**Status:** VALIDADO (headings/listas/sublistas + fontes; toolbar aplicada com `onMouseDown` + `focus`, sem perda de seleção)
 
 - TipTap + toolbar completa:
-- H1/H2/H3, listas, bold/italic/underline/strike
-- alinhamento, inline code
+- H1/H2/H3, listas, sublistas (Tab/Shift+Tab), bold/italic/underline/strike
+- alinhamento, inline code, fontes (font-family)
 - Salvar `content_json` + gerar `content_text` para busca
 - Inline code copiável com 1 clique (como você pediu)
 
+**Validação/Evidências (S3)**
+
+- Comandos (PowerShell):
+  - `npm ci`
+  - `npx tsc --noEmit`
+  - `npm run lint`
+  - `npm run build`
+  - `npm run dev` (teste manual)
+
 **Checklist de validação manual (S3)**
 
-- Clicar nos botões da toolbar aplica formatação no editor ativo.
+- H1/H2/H3 atualiza o JSON (debug em dev + `can().toggleHeading`) e renderiza visualmente.
+- Bullet/ordered list aplicam corretamente e sublistas funcionam com Tab/Shift+Tab.
+- 2º nível de lista usa marcador "-" via CSS.
+- Dropdown de fonte aplica e persiste no conteúdo.
 - Seleção não é perdida ao clicar nos botões (sem blur).
 - Alinhamento (left/center/right/justify) aplica corretamente.
 
