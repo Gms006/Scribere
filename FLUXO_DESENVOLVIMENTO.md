@@ -76,6 +76,7 @@
 - Inline code copiável com 1 clique (como você pediu)
 
 **Checklist de validação manual (S3)**
+
 - Clicar nos botões da toolbar aplica formatação no editor ativo.
 - Seleção não é perdida ao clicar nos botões (sem blur).
 - Alinhamento (left/center/right/justify) aplica corretamente.

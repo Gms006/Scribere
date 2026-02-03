@@ -69,20 +69,20 @@ const NoteEditor = ({
 
   const toolbar = useMemo(
     () => [
-      { label: 'H1', action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run() },
-      { label: 'H2', action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
-      { label: 'H3', action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
-      { label: '•', action: () => editor?.chain().focus().toggleBulletList().run() },
-      { label: '1.', action: () => editor?.chain().focus().toggleOrderedList().run() },
-      { label: 'B', action: () => editor?.chain().focus().toggleBold().run() },
-      { label: 'I', action: () => editor?.chain().focus().toggleItalic().run() },
-      { label: 'U', action: () => editor?.chain().focus().toggleUnderline().run() },
-      { label: 'S', action: () => editor?.chain().focus().toggleStrike().run() },
-      { label: '</>', action: () => editor?.chain().focus().toggleCode().run() },
-      { label: '↤', action: () => editor?.chain().focus().setTextAlign('left').run() },
-      { label: '↔', action: () => editor?.chain().focus().setTextAlign('center').run() },
-      { label: '↦', action: () => editor?.chain().focus().setTextAlign('right').run() },
-      { label: '≡', action: () => editor?.chain().focus().setTextAlign('justify').run() },
+      { label: 'H1', name: 'Heading 1', action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run() },
+      { label: 'H2', name: 'Heading 2', action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
+      { label: 'H3', name: 'Heading 3', action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
+      { label: '•', name: 'Bullet List', action: () => editor?.chain().focus().toggleBulletList().run() },
+      { label: '1.', name: 'Ordered List', action: () => editor?.chain().focus().toggleOrderedList().run() },
+      { label: 'B', name: 'Bold', action: () => editor?.chain().toggleBold().run() },
+      { label: 'I', name: 'Italic', action: () => editor?.chain().toggleItalic().run() },
+      { label: 'U', name: 'Underline', action: () => editor?.chain().toggleUnderline().run() },
+      { label: 'S', name: 'Strike', action: () => editor?.chain().toggleStrike().run() },
+      { label: '</>', name: 'Inline Code', action: () => editor?.chain().toggleCode().run() },
+      { label: '↤', name: 'Align Left', action: () => editor?.chain().focus().setTextAlign('left').run() },
+      { label: '↔', name: 'Align Center', action: () => editor?.chain().focus().setTextAlign('center').run() },
+      { label: '↦', name: 'Align Right', action: () => editor?.chain().focus().setTextAlign('right').run() },
+      { label: '≡', name: 'Justify', action: () => editor?.chain().focus().setTextAlign('justify').run() },
     ],
     [editor]
   )
@@ -123,6 +123,7 @@ const NoteEditor = ({
           {toolbar.map((item) => (
             <button
               key={item.label}
+              title={item.name}
               className="rounded-lg border border-slate-200 px-2.5 py-1 text-ink-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
               type="button"
               disabled={!editor}
