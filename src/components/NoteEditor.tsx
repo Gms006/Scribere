@@ -127,7 +127,11 @@ const NoteEditor = ({
         name: 'Heading 3',
         action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
       },
-      { label: '•', name: 'Bullet List', action: () => editor?.chain().focus().toggleBulletList().run() },
+      {
+        label: '•',
+        name: 'Bullet List',
+        action: () => editor?.chain().focus().toggleBulletList().run(),
+      },
       {
         label: '1.',
         name: 'Ordered List',
@@ -138,10 +142,26 @@ const NoteEditor = ({
       { label: 'U', name: 'Underline', action: () => editor?.chain().toggleUnderline().run() },
       { label: 'S', name: 'Strike', action: () => editor?.chain().toggleStrike().run() },
       { label: '</>', name: 'Inline Code', action: () => editor?.chain().toggleCode().run() },
-      { label: '↤', name: 'Align Left', action: () => editor?.chain().focus().setTextAlign('left').run() },
-      { label: '↔', name: 'Align Center', action: () => editor?.chain().focus().setTextAlign('center').run() },
-      { label: '↦', name: 'Align Right', action: () => editor?.chain().focus().setTextAlign('right').run() },
-      { label: '≡', name: 'Justify', action: () => editor?.chain().focus().setTextAlign('justify').run() },
+      {
+        label: '↤',
+        name: 'Align Left',
+        action: () => editor?.chain().focus().setTextAlign('left').run(),
+      },
+      {
+        label: '↔',
+        name: 'Align Center',
+        action: () => editor?.chain().focus().setTextAlign('center').run(),
+      },
+      {
+        label: '↦',
+        name: 'Align Right',
+        action: () => editor?.chain().focus().setTextAlign('right').run(),
+      },
+      {
+        label: '≡',
+        name: 'Justify',
+        action: () => editor?.chain().focus().setTextAlign('justify').run(),
+      },
     ],
     [editor]
   )
