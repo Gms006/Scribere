@@ -149,6 +149,18 @@ const NoteEditor = ({
   ]
   const currentFont = editor?.getAttributes('textStyle')?.fontFamily ?? ''
 
+  const fontOptions = [
+    { label: 'System', value: '' },
+    { label: 'Inter', value: 'Inter' },
+    { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
+    {
+      label: 'Monospace',
+      value:
+        '"SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    },
+  ]
+  const currentFont = editor?.getAttributes('textStyle')?.fontFamily ?? ''
+
   const toolbar = useMemo(
     () => [
       {
