@@ -15,7 +15,9 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
+    "@tiptap/extension-font-family": "^2.27.2",
     "@tiptap/extension-text-align": "^2.27.0",
+    "@tiptap/extension-text-style": "^2.27.2",
     "@tiptap/extension-underline": "^2.27.0",
     "@tiptap/react": "^2.27.0",
     "@tiptap/starter-kit": "^2.27.0",
