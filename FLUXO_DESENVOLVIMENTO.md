@@ -86,7 +86,7 @@
 
 **Checklist de validação manual (S3)**
 
-- H1/H2/H3 atualiza o JSON (debug em dev) e renderiza visualmente.
+- H1/H2/H3 atualiza o JSON (debug em dev + `can().toggleHeading`) e renderiza visualmente.
 - Bullet/ordered list aplicam corretamente e sublistas funcionam com Tab/Shift+Tab.
 - 2º nível de lista usa marcador "-" via CSS.
 - Dropdown de fonte aplica e persiste no conteúdo.

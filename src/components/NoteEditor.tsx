@@ -2,6 +2,10 @@ import { useMemo, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { Extension, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
+import Heading from '@tiptap/extension-heading'
+import BulletList from '@tiptap/extension-bullet-list'
+import OrderedList from '@tiptap/extension-ordered-list'
+import ListItem from '@tiptap/extension-list-item'
 import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import Code from '@tiptap/extension-code'
@@ -40,8 +44,8 @@ const ListIndent = Extension.create({
   name: 'listIndent',
   addKeyboardShortcuts() {
     return {
-      Tab: () => this.editor.commands.sinkListItem('listItem'),
-      'Shift-Tab': () => this.editor.commands.liftListItem('listItem'),
+      Tab: () => this.editor.commands.sinkListItem(ListItem.name),
+      'Shift-Tab': () => this.editor.commands.liftListItem(ListItem.name),
     }
   },
 })
@@ -54,16 +58,25 @@ const NoteEditor = ({
   onCopy,
 }: NoteEditorProps) => {
   const [debugJson, setDebugJson] = useState<Record<string, unknown> | null>(content ?? null)
+  const [debugCan, setDebugCan] = useState<{
+    heading: boolean
+    bulletList: boolean
+    orderedList: boolean
+  } | null>(null)
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         code: false,
-        heading: { levels: [1, 2, 3] },
-        bulletList: {},
-        orderedList: {},
-        listItem: {},
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
       }),
+      Heading.configure({ levels: [1, 2, 3] }),
+      BulletList,
+      OrderedList,
+      ListItem,
       InlineCode,
       Underline,
       TextAlign.configure({
@@ -88,12 +101,32 @@ const NoteEditor = ({
     onUpdate: ({ editor: updatedEditor }) => {
       if (import.meta.env.DEV) {
         setDebugJson(updatedEditor.getJSON() as Record<string, unknown>)
+        setDebugCan({
+          heading: updatedEditor
+            .can()
+            .chain()
+            .focus()
+            .toggleHeading({ level: 1 })
+            .run(),
+          bulletList: updatedEditor.can().chain().focus().toggleBulletList().run(),
+          orderedList: updatedEditor.can().chain().focus().toggleOrderedList().run(),
+        })
       }
       onContentChange(updatedEditor.getJSON() as Record<string, unknown>, updatedEditor.getText())
     },
     onCreate: ({ editor: createdEditor }) => {
       if (import.meta.env.DEV) {
         setDebugJson(createdEditor.getJSON() as Record<string, unknown>)
+        setDebugCan({
+          heading: createdEditor
+            .can()
+            .chain()
+            .focus()
+            .toggleHeading({ level: 1 })
+            .run(),
+          bulletList: createdEditor.can().chain().focus().toggleBulletList().run(),
+          orderedList: createdEditor.can().chain().focus().toggleOrderedList().run(),
+        })
       }
     },
   })
@@ -233,6 +266,19 @@ const NoteEditor = ({
           <pre className="mt-2 max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] text-ink-600">
             {JSON.stringify(debugJson, null, 2)}
           </pre>
+          {debugCan && (
+            <pre className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] text-ink-600">
+              {JSON.stringify(
+                {
+                  canToggleHeading: debugCan.heading,
+                  canToggleBulletList: debugCan.bulletList,
+                  canToggleOrderedList: debugCan.orderedList,
+                },
+                null,
+                2
+              )}
+            </pre>
+          )}
         </div>
       )}
     </div>
