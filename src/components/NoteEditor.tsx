@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { Extension, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
@@ -64,8 +64,8 @@ const NoteEditor = ({
     orderedList: boolean
   } | null>(null)
 
-  const editor = useEditor({
-    extensions: [
+  const extensions = useMemo(
+    () => [
       StarterKit.configure({
         code: false,
         heading: false,
@@ -88,48 +88,66 @@ const NoteEditor = ({
       }),
       ListIndent,
     ],
-    content: content ?? {
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }],
-    },
-    editorProps: {
-      attributes: {
-        class:
-          'min-h-[360px] rounded-xl px-4 py-3 text-sm leading-6 text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+    []
+  )
+
+  const editor = useEditor(
+    {
+      extensions,
+      content: content ?? {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }],
+      },
+      editorProps: {
+        attributes: {
+          class:
+            'min-h-[360px] rounded-xl px-4 py-3 text-sm leading-6 text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+        },
+      },
+      onUpdate: ({ editor: updatedEditor }) => {
+        if (import.meta.env.DEV) {
+          setDebugJson(updatedEditor.getJSON() as Record<string, unknown>)
+          setDebugCan({
+            heading: updatedEditor.can().toggleHeading({ level: 1 }),
+            bulletList: updatedEditor.can().toggleBulletList(),
+            orderedList: updatedEditor.can().toggleOrderedList(),
+          })
+        }
+        onContentChange(updatedEditor.getJSON() as Record<string, unknown>, updatedEditor.getText())
+      },
+      onCreate: ({ editor: createdEditor }) => {
+        if (import.meta.env.DEV) {
+          console.log('[NoteEditor] onCreate')
+          setDebugJson(createdEditor.getJSON() as Record<string, unknown>)
+          setDebugCan({
+            heading: createdEditor.can().toggleHeading({ level: 1 }),
+            bulletList: createdEditor.can().toggleBulletList(),
+            orderedList: createdEditor.can().toggleOrderedList(),
+          })
+        }
       },
     },
-    onUpdate: ({ editor: updatedEditor }) => {
-      if (import.meta.env.DEV) {
-        setDebugJson(updatedEditor.getJSON() as Record<string, unknown>)
-        setDebugCan({
-          heading: updatedEditor
-            .can()
-            .chain()
-            .focus()
-            .toggleHeading({ level: 1 })
-            .run(),
-          bulletList: updatedEditor.can().chain().focus().toggleBulletList().run(),
-          orderedList: updatedEditor.can().chain().focus().toggleOrderedList().run(),
-        })
-      }
-      onContentChange(updatedEditor.getJSON() as Record<string, unknown>, updatedEditor.getText())
+    []
+  )
+
+  useEffect(() => {
+    if (!editor || !content) {
+      return
+    }
+    editor.commands.setContent(content, false)
+  }, [editor, content])
+
+  const fontOptions = [
+    { label: 'System', value: '' },
+    { label: 'Inter', value: 'Inter' },
+    { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
+    {
+      label: 'Monospace',
+      value:
+        '"SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     },
-    onCreate: ({ editor: createdEditor }) => {
-      if (import.meta.env.DEV) {
-        setDebugJson(createdEditor.getJSON() as Record<string, unknown>)
-        setDebugCan({
-          heading: createdEditor
-            .can()
-            .chain()
-            .focus()
-            .toggleHeading({ level: 1 })
-            .run(),
-          bulletList: createdEditor.can().chain().focus().toggleBulletList().run(),
-          orderedList: createdEditor.can().chain().focus().toggleOrderedList().run(),
-        })
-      }
-    },
-  })
+  ]
+  const currentFont = editor?.getAttributes('textStyle')?.fontFamily ?? ''
 
   const fontOptions = [
     { label: 'System', value: '' },
