@@ -2,6 +2,8 @@
 
 ## Stage 0 — Setup do repo ✅
 
+**Status:** CONCLUÍDO
+
 **Entregas obrigatórias**
 
 - Vite + React + TS
@@ -18,13 +20,43 @@
 - `npm run lint` passa
 - `npm run format` executa
 
+**Validação/Evidências**
+
+- Checklist de arquivos: `package.json` contém scripts `dev`, `build`, `preview`, `lint`, `format`. (validação manual)
+- Comandos executados (validação manual já executada):
+  - `npm ci`
+  - `npx prettier -c .` → "All matched files use Prettier code style!"
+  - `npx tsc --noEmit` → sem erros
+  - `npm run lint` → sem erros
+  - `npm run build` → `dist/` gerado (warning de chunk > 500kb é aceitável)
+  - `npm run preview` → http://localhost:4173/ (subiu e respondeu)
+
 ## Stage 1 — Supabase + Auth (login) ✅
+
+**Status:** CONCLUÍDO
 
 - Criar projeto no Supabase
 - Configurar Auth (email/senha)
 - Session gate no React
 - Logout
 - (Opcional) tabela `profiles`
+
+**Validação/Evidências**
+
+- Checklist de arquivos:
+  - `supabase/notes.sql` presente (schema + RLS + policies + trigger). (validação manual)
+  - `src/lib/supabaseClient.ts` presente (client com persistência de sessão). (validação manual)
+  - Auth/guard/login: `src/context/AuthContext.tsx`, `src/components/ProtectedRoute.tsx`, `src/pages/Login.tsx`. (validação manual)
+- SQL (validação manual já executada):
+  - Tabela `public.notes` criada com `user_id`
+  - RLS habilitado (rls_enabled = true, rls_forced = false)
+  - Policies:
+    - SELECT: "Users can view their notes" qual: `(auth.uid() = user_id)`
+    - INSERT: "Users can insert their notes" with_check: `(auth.uid() = user_id)`
+    - UPDATE: "Users can update their notes" qual: `(auth.uid() = user_id)`
+    - DELETE: "Users can delete their notes" qual: `(auth.uid() = user_id)`
+  - Trigger: `set_notes_updated_at`
+- Teste funcional manual: nota criada persistiu após refresh (F5) e relogin.
 
 ## Stage 2 — Banco + RLS + CRUD Notes ✅
 
