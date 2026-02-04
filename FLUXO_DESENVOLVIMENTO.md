@@ -67,7 +67,7 @@
 
 ## Stage 3 — Editor robusto (TipTap) ✅
 
-**Status:** VALIDADO (headings/listas/sublistas + fontes; toolbar aplicada com `onMouseDown` + `focus`, sem perda de seleção)
+**Status:** VALIDADO (headings/listas/sublistas + fontes; toolbar aplicada com `onMouseDown` + `focus`, sem perda de seleção; autosave com debounce + dirty)
 
 - TipTap + toolbar completa:
 - H1/H2/H3, listas, sublistas (Tab/Shift+Tab), bold/italic/underline/strike
@@ -82,7 +82,7 @@
   - `npx tsc --noEmit`
   - `npm run lint`
   - `npm run build`
-  - `npm run dev` (teste manual)
+  - `npm run dev` (servidor iniciado para validação manual)
 
 **Checklist de validação manual (S3)**
 
@@ -92,6 +92,8 @@
 - Dropdown de fonte aplica e persiste no conteúdo.
 - Seleção não é perdida ao clicar nos botões (sem blur).
 - Alinhamento (left/center/right/justify) aplica corretamente.
+- Autosave só dispara quando há mudanças (dirty) e respeita debounce.
+- Trocar de nota não sobrescreve conteúdo (A/B/C).
 
 ## Stage 4 — UX TDAH-friendly ✅
 
