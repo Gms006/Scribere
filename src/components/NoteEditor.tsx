@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { Extension, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
@@ -13,6 +13,7 @@ import TextStyle from '@tiptap/extension-text-style'
 import FontFamily from '@tiptap/extension-font-family'
 
 type NoteEditorProps = {
+  noteId: string | null
   title: string
   content: Record<string, unknown> | null
   onTitleChange: (value: string) => void
@@ -51,6 +52,7 @@ const ListIndent = Extension.create({
 })
 
 const NoteEditor = ({
+  noteId,
   title,
   content,
   onTitleChange,
@@ -63,6 +65,7 @@ const NoteEditor = ({
     bulletList: boolean
     orderedList: boolean
   } | null>(null)
+  const lastNoteIdRef = useRef<string | null>(null)
 
   const extensions = useMemo(
     () => [
@@ -108,9 +111,9 @@ const NoteEditor = ({
         if (import.meta.env.DEV) {
           setDebugJson(updatedEditor.getJSON() as Record<string, unknown>)
           setDebugCan({
-            heading: updatedEditor.can().toggleHeading({ level: 1 }),
-            bulletList: updatedEditor.can().toggleBulletList(),
-            orderedList: updatedEditor.can().toggleOrderedList(),
+            heading: updatedEditor.can().chain().focus().toggleHeading({ level: 1 }).run(),
+            bulletList: updatedEditor.can().chain().focus().toggleBulletList().run(),
+            orderedList: updatedEditor.can().chain().focus().toggleOrderedList().run(),
           })
         }
         onContentChange(updatedEditor.getJSON() as Record<string, unknown>, updatedEditor.getText())
@@ -120,9 +123,9 @@ const NoteEditor = ({
           console.log('[NoteEditor] onCreate')
           setDebugJson(createdEditor.getJSON() as Record<string, unknown>)
           setDebugCan({
-            heading: createdEditor.can().toggleHeading({ level: 1 }),
-            bulletList: createdEditor.can().toggleBulletList(),
-            orderedList: createdEditor.can().toggleOrderedList(),
+            heading: createdEditor.can().chain().focus().toggleHeading({ level: 1 }).run(),
+            bulletList: createdEditor.can().chain().focus().toggleBulletList().run(),
+            orderedList: createdEditor.can().chain().focus().toggleOrderedList().run(),
           })
         }
       },
@@ -134,20 +137,12 @@ const NoteEditor = ({
     if (!editor || !content) {
       return
     }
+    if (lastNoteIdRef.current === noteId) {
+      return
+    }
+    lastNoteIdRef.current = noteId
     editor.commands.setContent(content, false)
-  }, [editor, content])
-
-  const fontOptions = [
-    { label: 'System', value: '' },
-    { label: 'Inter', value: 'Inter' },
-    { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
-    {
-      label: 'Monospace',
-      value:
-        '"SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-    },
-  ]
-  const currentFont = editor?.getAttributes('textStyle')?.fontFamily ?? ''
+  }, [editor, content, noteId])
 
   const fontOptions = [
     { label: 'System', value: '' },
@@ -178,21 +173,49 @@ const NoteEditor = ({
         name: 'Heading 3',
         action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
       },
-      { label: '•', name: 'Bullet List', action: () => editor?.chain().focus().toggleBulletList().run() },
+      {
+        label: '•',
+        name: 'Bullet List',
+        action: () => editor?.chain().focus().toggleBulletList().run(),
+      },
       {
         label: '1.',
         name: 'Ordered List',
         action: () => editor?.chain().focus().toggleOrderedList().run(),
       },
-      { label: 'B', name: 'Bold', action: () => editor?.chain().toggleBold().run() },
-      { label: 'I', name: 'Italic', action: () => editor?.chain().toggleItalic().run() },
-      { label: 'U', name: 'Underline', action: () => editor?.chain().toggleUnderline().run() },
-      { label: 'S', name: 'Strike', action: () => editor?.chain().toggleStrike().run() },
-      { label: '</>', name: 'Inline Code', action: () => editor?.chain().toggleCode().run() },
-      { label: '↤', name: 'Align Left', action: () => editor?.chain().focus().setTextAlign('left').run() },
-      { label: '↔', name: 'Align Center', action: () => editor?.chain().focus().setTextAlign('center').run() },
-      { label: '↦', name: 'Align Right', action: () => editor?.chain().focus().setTextAlign('right').run() },
-      { label: '≡', name: 'Justify', action: () => editor?.chain().focus().setTextAlign('justify').run() },
+      { label: 'B', name: 'Bold', action: () => editor?.chain().focus().toggleBold().run() },
+      { label: 'I', name: 'Italic', action: () => editor?.chain().focus().toggleItalic().run() },
+      {
+        label: 'U',
+        name: 'Underline',
+        action: () => editor?.chain().focus().toggleUnderline().run(),
+      },
+      { label: 'S', name: 'Strike', action: () => editor?.chain().focus().toggleStrike().run() },
+      {
+        label: '</>',
+        name: 'Inline Code',
+        action: () => editor?.chain().focus().toggleCode().run(),
+      },
+      {
+        label: '↤',
+        name: 'Align Left',
+        action: () => editor?.chain().focus().setTextAlign('left').run(),
+      },
+      {
+        label: '↔',
+        name: 'Align Center',
+        action: () => editor?.chain().focus().setTextAlign('center').run(),
+      },
+      {
+        label: '↦',
+        name: 'Align Right',
+        action: () => editor?.chain().focus().setTextAlign('right').run(),
+      },
+      {
+        label: '≡',
+        name: 'Justify',
+        action: () => editor?.chain().focus().setTextAlign('justify').run(),
+      },
     ],
     [editor]
   )
