@@ -1,5 +1,7 @@
 # Estrutura do repositório
 
+> Observação: diretórios gerados (ex.: `node_modules/`, `dist/`) não são listados.
+
 ```
 .
 ├── .env.example
