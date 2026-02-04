@@ -12,6 +12,8 @@ const createDefaultContent = () => ({
   content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }],
 })
 
+const normalizeTitle = (title: string) => title.trim() || 'Sem título'
+
 const AppPage = () => {
   const { user, signOut } = useAuth()
   const [notes, setNotes] = useState<Note[]>([])
@@ -26,6 +28,14 @@ const AppPage = () => {
     useState<Record<string, unknown>>(createDefaultContent())
   const [draftContentText, setDraftContentText] = useState('')
   const searchRef = useRef<HTMLInputElement | null>(null)
+  const selectedIdRef = useRef<string | null>(null)
+  const saveTimeoutRef = useRef<number | null>(null)
+  const lastSavedRef = useRef<{
+    id: string | null
+    title: string
+    contentJsonString: string
+    contentText: string
+  } | null>(null)
 
   const selectedNote = useMemo(
     () => notes.find((note) => note.id === selectedId) ?? null,
@@ -48,6 +58,19 @@ const AppPage = () => {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId
+  }, [selectedId])
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -81,27 +104,75 @@ const AppPage = () => {
     if (!selectedNote) {
       return
     }
-    setDraftTitle(selectedNote.title)
-    setDraftContentJson(
-      (selectedNote.content_json ?? createDefaultContent()) as Record<string, unknown>
-    )
-    setDraftContentText(selectedNote.content_text ?? '')
+    const nextTitle = selectedNote.title
+    const nextContentJson = (selectedNote.content_json ?? createDefaultContent()) as Record<
+      string,
+      unknown
+    >
+    const nextContentText = selectedNote.content_text ?? ''
+
+    setDraftTitle(nextTitle)
+    setDraftContentJson(nextContentJson)
+    setDraftContentText(nextContentText)
+    lastSavedRef.current = {
+      id: selectedNote.id,
+      title: normalizeTitle(nextTitle),
+      contentJsonString: JSON.stringify(nextContentJson),
+      contentText: nextContentText,
+    }
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current)
+      saveTimeoutRef.current = null
+    }
+    setIsSaving(false)
   }, [selectedNote])
 
   useEffect(() => {
     if (!selectedNote) {
       return
     }
-    const timeout = window.setTimeout(async () => {
+    const currentTitle = normalizeTitle(draftTitle)
+    const currentContentJsonString = JSON.stringify(draftContentJson)
+    const currentContentText = draftContentText
+    const lastSaved = lastSavedRef.current
+    const isDirty =
+      !lastSaved ||
+      lastSaved.id !== selectedNote.id ||
+      lastSaved.title !== currentTitle ||
+      lastSaved.contentJsonString !== currentContentJsonString ||
+      lastSaved.contentText !== currentContentText
+
+    if (!isDirty) {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+      return
+    }
+
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = window.setTimeout(async () => {
+      if (selectedIdRef.current !== selectedNote.id) {
+        return
+      }
       try {
         setIsSaving(true)
         const updated = await updateNote(selectedNote.id, {
-          title: draftTitle.trim() || 'Sem título',
+          title: currentTitle,
           content_json: draftContentJson,
-          content_text: draftContentText,
+          content_text: currentContentText,
           pinned: selectedNote.pinned ?? false,
         })
         setNotes((prev) => prev.map((note) => (note.id === selectedNote.id ? updated : note)))
+        lastSavedRef.current = {
+          id: selectedNote.id,
+          title: currentTitle,
+          contentJsonString: currentContentJsonString,
+          contentText: currentContentText,
+        }
         setIsSaving(false)
       } catch {
         setToast('Erro ao salvar alterações.')
@@ -109,7 +180,12 @@ const AppPage = () => {
       }
     }, 800)
 
-    return () => window.clearTimeout(timeout)
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+    }
   }, [draftContentJson, draftContentText, draftTitle, selectedNote])
 
   const handleCreateNote = async () => {
@@ -145,6 +221,10 @@ const AppPage = () => {
         }
         return updated
       })
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
     } catch {
       setToast('Não foi possível excluir a nota.')
     }
@@ -262,6 +342,7 @@ const AppPage = () => {
           {selectedNote && (
             <NoteEditor
               key={selectedNote.id}
+              noteId={selectedNote.id}
               title={draftTitle}
               content={draftContentJson}
               onTitleChange={setDraftTitle}
