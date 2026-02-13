@@ -65,6 +65,10 @@ const AppPage = () => {
 
   useEffect(() => {
     selectedIdRef.current = selectedId
+    // Persiste a nota selecionada sempre que mudar
+    if (selectedId) {
+      localStorage.setItem(SELECTED_NOTE_KEY, selectedId)
+    }
   }, [selectedId])
 
   useEffect(() => {
@@ -93,28 +97,32 @@ const AppPage = () => {
         const data = await Promise.race([listNotes(user.id), timeoutPromise])
         setNotes(data)
 
-        // 🔧 CORREÇÃO: Tentar restaurar a nota selecionada do localStorage
+        // Tentar restaurar a nota selecionada do localStorage
         const savedNoteId = localStorage.getItem(SELECTED_NOTE_KEY)
         let noteToSelect: string | null = null
 
-        // Verifica se a nota salva ainda existe
         if (savedNoteId && data.some((note) => note.id === savedNoteId)) {
           noteToSelect = savedNoteId
         } else {
-          // Fallback para a primeira nota
           noteToSelect = data[0]?.id ?? null
         }
 
         setSelectedId(noteToSelect)
 
         // Inicializa os drafts com a nota selecionada
-        const selectedNote = data.find((note) => note.id === noteToSelect)
-        if (selectedNote) {
-          setDraftTitle(selectedNote.title)
+        const initialNote = data.find((note) => note.id === noteToSelect)
+        if (initialNote) {
+          setDraftTitle(initialNote.title)
           setDraftContentJson(
-            (selectedNote.content_json ?? createDefaultContent()) as Record<string, unknown>
+            (initialNote.content_json ?? createDefaultContent()) as Record<string, unknown>
           )
-          setDraftContentText(selectedNote.content_text ?? '')
+          setDraftContentText(initialNote.content_text ?? '')
+          lastSavedRef.current = {
+            id: initialNote.id,
+            title: normalizeTitle(initialNote.title),
+            contentJsonString: JSON.stringify(initialNote.content_json ?? createDefaultContent()),
+            contentText: initialNote.content_text ?? '',
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar notas.')
@@ -126,38 +134,37 @@ const AppPage = () => {
     loadNotes()
   }, [user])
 
-  // 🔧 NOVO: Persiste a nota selecionada no localStorage
-  useEffect(() => {
-    if (selectedId) {
-      localStorage.setItem(SELECTED_NOTE_KEY, selectedId)
-    }
-  }, [selectedId])
-
   useEffect(() => {
     if (!selectedNote) {
       return
     }
-    const nextTitle = selectedNote.title
-    const nextContentJson = (selectedNote.content_json ?? createDefaultContent()) as Record<
-      string,
-      unknown
-    >
-    const nextContentText = selectedNote.content_text ?? ''
+    
+    // Só atualiza os drafts se mudarmos de nota
+    if (lastSavedRef.current?.id !== selectedNote.id) {
+      const nextTitle = selectedNote.title
+      const nextContentJson = (selectedNote.content_json ?? createDefaultContent()) as Record<
+        string,
+        unknown
+      >
+      const nextContentText = selectedNote.content_text ?? ''
 
-    setDraftTitle(nextTitle)
-    setDraftContentJson(nextContentJson)
-    setDraftContentText(nextContentText)
-    lastSavedRef.current = {
-      id: selectedNote.id,
-      title: normalizeTitle(nextTitle),
-      contentJsonString: JSON.stringify(nextContentJson),
-      contentText: nextContentText,
+      setDraftTitle(nextTitle)
+      setDraftContentJson(nextContentJson)
+      setDraftContentText(nextContentText)
+      
+      lastSavedRef.current = {
+        id: selectedNote.id,
+        title: normalizeTitle(nextTitle),
+        contentJsonString: JSON.stringify(nextContentJson),
+        contentText: nextContentText,
+      }
+      
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+      setIsSaving(false)
     }
-    if (saveTimeoutRef.current) {
-      window.clearTimeout(saveTimeoutRef.current)
-      saveTimeoutRef.current = null
-    }
-    setIsSaving(false)
   }, [selectedNote])
 
   useEffect(() => {
@@ -168,6 +175,7 @@ const AppPage = () => {
     const currentContentJsonString = JSON.stringify(draftContentJson)
     const currentContentText = draftContentText
     const lastSaved = lastSavedRef.current
+    
     const isDirty =
       !lastSaved ||
       lastSaved.id !== selectedNote.id ||
@@ -252,7 +260,6 @@ const AppPage = () => {
         if (selectedId === noteId) {
           const newSelectedId = updated[0]?.id ?? null
           setSelectedId(newSelectedId)
-          // 🔧 CORREÇÃO: Limpa o localStorage se não houver mais notas, ou atualiza com a nova seleção
           if (newSelectedId) {
             localStorage.setItem(SELECTED_NOTE_KEY, newSelectedId)
           } else {
@@ -322,76 +329,99 @@ const AppPage = () => {
 
           <div className="mt-6 space-y-2">
             {loading && <p className="text-xs text-ink-400">Carregando notas...</p>}
-            {error && (
-              <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">
-                {error}
-              </div>
-            )}
-            {!loading && !error && filteredNotes.length === 0 && (
+            {error && <p className="text-xs text-red-500">{error}</p>}
+            {!loading && filteredNotes.length === 0 && (
               <p className="text-xs text-ink-400">Nenhuma nota encontrada.</p>
             )}
             {filteredNotes.map((note) => (
               <div
                 key={note.id}
-                className={`rounded-xl border px-3 py-2 text-xs transition ${
-                  note.id === selectedId
-                    ? 'border-ink-900 bg-slate-100 text-ink-900'
-                    : 'border-slate-200 text-ink-600 hover:bg-slate-50'
+                className={`group relative flex cursor-pointer flex-col gap-1 rounded-xl p-3 transition ${
+                  selectedId === note.id ? 'bg-brand-50 shadow-sm' : 'hover:bg-slate-50'
                 }`}
+                onClick={() => setSelectedId(note.id)}
               >
-                <button
-                  className="w-full text-left font-semibold"
-                  type="button"
-                  onClick={() => setSelectedId(note.id)}
-                >
-                  {note.title || 'Sem título'}
-                </button>
-                <div className="mt-2 flex items-center justify-between text-[11px] text-ink-400">
-                  <span>{new Date(note.updated_at).toLocaleDateString('pt-BR')}</span>
-                  <button
-                    aria-label="Excluir nota"
-                    className="text-ink-400 hover:text-red-500"
-                    type="button"
-                    onClick={() => handleDeleteNote(note.id)}
+                <div className="flex items-center justify-between gap-2">
+                  <p
+                    className={`truncate text-sm font-medium ${
+                      selectedId === note.id ? 'text-brand-900' : 'text-ink-900'
+                    }`}
                   >
-                    Excluir
+                    {note.title || 'Sem título'}
+                  </p>
+                  <button
+                    className="opacity-0 transition group-hover:opacity-100"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteNote(note.id)
+                    }}
+                  >
+                    <svg
+                      className="h-4 w-4 text-ink-400 hover:text-red-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                      />
+                    </svg>
                   </button>
                 </div>
+                <p className="truncate text-xs text-ink-400">
+                  {note.content_text || 'Nenhum conteúdo'}
+                </p>
               </div>
             ))}
           </div>
         </aside>
 
-        <main className="flex-1">
-          {!selectedNote && !loading && !error && (
-            <div className="flex h-full min-h-[400px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center">
-              <p className="text-sm font-semibold text-ink-700">Sem notas ainda</p>
-              <p className="mt-2 text-xs text-ink-500">
-                Crie uma nota para começar a organizar suas ideias.
-              </p>
-              <button
-                className="mt-6 rounded-lg bg-ink-900 px-4 py-2 text-xs font-semibold text-white hover:bg-ink-700"
-                type="button"
-                onClick={handleCreateNote}
-              >
-                Criar primeira nota
-              </button>
-            </div>
-          )}
-
-          {selectedNote && (
+        <main className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {selectedNote ? (
             <NoteEditor
-              key={selectedNote.id}
+              content={draftContentJson}
               noteId={selectedNote.id}
               title={draftTitle}
-              content={draftContentJson}
-              onTitleChange={setDraftTitle}
               onContentChange={(json, text) => {
                 setDraftContentJson(json)
                 setDraftContentText(text)
               }}
-              onCopy={(message) => setToast(message)}
+              onCopy={(msg) => setToast(msg)}
+              onTitleChange={setDraftTitle}
             />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center p-12 text-center">
+              <div className="mb-4 rounded-full bg-slate-50 p-4">
+                <svg
+                  className="h-8 w-8 text-ink-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-ink-900">Nenhuma nota selecionada</h3>
+              <p className="mt-2 text-sm text-ink-500">
+                Selecione uma nota na barra lateral ou crie uma nova para começar a escrever.
+              </p>
+              <button
+                className="mt-6 rounded-xl bg-ink-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-700"
+                type="button"
+                onClick={handleCreateNote}
+              >
+                Criar nova nota
+              </button>
+            </div>
           )}
         </main>
       </div>

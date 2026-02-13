@@ -32,6 +32,7 @@ body {
     min-height: 360px;
     white-space: pre-wrap;
     word-break: break-word;
+    outline: none;
   }
 
   .ProseMirror p {
@@ -79,63 +80,87 @@ body {
     content: '- ';
   }
 
-  /* 🔧 Estilos para code block */
-  .ProseMirror pre {
+  /* 🔧 Estilos para Code Block */
+  /* Usando seletores mais específicos para garantir que as regras sejam aplicadas */
+  .ProseMirror .code-block-wrapper {
+    @apply relative my-4;
+    max-width: 100%;
+  }
+
+  .ProseMirror pre.code-block {
     @apply rounded-lg bg-slate-900 text-slate-100;
-    padding: 1rem;
-    margin: 0.75rem 0;
+    padding: 1.25rem;
+    margin: 0;
     font-family: 'Monaco', 'Courier New', monospace;
     font-size: 0.875rem;
-    line-height: 1.5;
-    max-width: 100%;
-    overflow-x: auto;
-    white-space: pre;
+    line-height: 1.6;
+    
+    /* Forçar scroll horizontal */
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    white-space: pre !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
+  }
+
+  /* Garantir que o código interno não quebre linha */
+  .ProseMirror pre.code-block code {
+    @apply bg-transparent p-0 text-inherit;
+    display: inline-block;
+    min-width: 100%;
+    white-space: pre !important;
   }
 
   /* Scrollbar personalizada para blocos de código */
-  .ProseMirror pre::-webkit-scrollbar {
+  .ProseMirror pre.code-block::-webkit-scrollbar {
     height: 8px;
   }
 
-  .ProseMirror pre::-webkit-scrollbar-track {
+  .ProseMirror pre.code-block::-webkit-scrollbar-track {
     @apply bg-slate-800;
     border-radius: 4px;
   }
 
-  .ProseMirror pre::-webkit-scrollbar-thumb {
+  .ProseMirror pre.code-block::-webkit-scrollbar-thumb {
     @apply bg-slate-600;
     border-radius: 4px;
   }
 
-  .ProseMirror pre::-webkit-scrollbar-thumb:hover {
+  .ProseMirror pre.code-block::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-500;
   }
 
-  .ProseMirror pre code {
-    background: none;
-    padding: 0;
-    color: inherit;
-    font-size: inherit;
-    border-radius: 0;
+  /* 🔧 Alinhamento para Checklist */
+  /* O Tiptap usa li[data-type="taskItem"] para checklists */
+  .ProseMirror li[data-type="taskItem"] {
+    @apply flex items-start gap-3 !important;
+    margin: 0.5rem 0 !important;
+    list-style-type: none !important;
   }
 
-  /* Alinhamento para Checklist */
-  .ProseMirror ul[data-type="taskList"] li {
-    @apply flex items-start gap-3;
-    margin: 0.5rem 0;
-  }
-
-  .ProseMirror ul[data-type="taskList"] li > label {
-    @apply mt-1 flex-shrink-0;
+  .ProseMirror li[data-type="taskItem"] > label {
+    @apply mt-1 flex-shrink-0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     user-select: none;
   }
 
-  .ProseMirror ul[data-type="taskList"] li > div {
-    @apply flex-1;
+  .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"] {
+    @apply h-4 w-4 cursor-pointer rounded border-slate-300 text-brand-600 focus:ring-brand-500 !important;
+    margin: 0 !important;
   }
 
-  .ProseMirror ul[data-type="taskList"] li p {
-    margin: 0;
+  .ProseMirror li[data-type="taskItem"] > .task-item-content {
+    @apply flex-1 !important;
+    min-width: 0;
+  }
+
+  /* Remover margens de parágrafos dentro da checklist para não quebrar o alinhamento */
+  .ProseMirror li[data-type="taskItem"] > .task-item-content > p {
+    margin: 0 !important;
   }
 
   /* Estilos para inline code */
