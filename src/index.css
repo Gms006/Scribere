@@ -79,7 +79,7 @@ body {
     content: '- ';
   }
 
-  /* 🔧 NOVO: Estilos para code block */
+  /* 🔧 Estilos para code block */
   .ProseMirror pre {
     @apply rounded-lg bg-slate-900 text-slate-100;
     padding: 1rem;
@@ -87,14 +87,12 @@ body {
     font-family: 'Monaco', 'Courier New', monospace;
     font-size: 0.875rem;
     line-height: 1.5;
-    /* Largura fixa e scroll horizontal */
     max-width: 100%;
     overflow-x: auto;
-    /* Mantém formatação do código */
     white-space: pre;
-    /* Adiciona scrollbar personalizada (webkit) */
   }
 
+  /* Scrollbar personalizada para blocos de código */
   .ProseMirror pre::-webkit-scrollbar {
     height: 8px;
   }
@@ -121,7 +119,26 @@ body {
     border-radius: 0;
   }
 
-  /* Estilos para inline code (mantidos do original) */
+  /* Alinhamento para Checklist */
+  .ProseMirror ul[data-type="taskList"] li {
+    @apply flex items-start gap-3;
+    margin: 0.5rem 0;
+  }
+
+  .ProseMirror ul[data-type="taskList"] li > label {
+    @apply mt-1 flex-shrink-0;
+    user-select: none;
+  }
+
+  .ProseMirror ul[data-type="taskList"] li > div {
+    @apply flex-1;
+  }
+
+  .ProseMirror ul[data-type="taskList"] li p {
+    margin: 0;
+  }
+
+  /* Estilos para inline code */
   .inline-code-group {
     @apply inline-flex items-center gap-2 rounded-lg bg-slate-100 px-2 py-0.5 text-xs text-ink-700;
   }
