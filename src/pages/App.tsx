@@ -14,6 +14,9 @@ const createDefaultContent = () => ({
 
 const normalizeTitle = (title: string) => title.trim() || 'Sem título'
 
+// Chave para localStorage
+const SELECTED_NOTE_KEY = 'scribere-selected-note-id'
+
 const AppPage = () => {
   const { user, signOut } = useAuth()
   const [notes, setNotes] = useState<Note[]>([])
@@ -80,15 +83,38 @@ const AppPage = () => {
       }
       try {
         setLoading(true)
-        const data = await listNotes(user.id)
+        setError(null)
+
+        // Timeout em 10 segundos
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Tempo limite excedido ao carregar notas.')), 10000)
+        )
+
+        const data = await Promise.race([listNotes(user.id), timeoutPromise])
         setNotes(data)
-        setSelectedId(data[0]?.id ?? null)
-        if (data[0]) {
-          setDraftTitle(data[0].title)
+
+        // 🔧 CORREÇÃO: Tentar restaurar a nota selecionada do localStorage
+        const savedNoteId = localStorage.getItem(SELECTED_NOTE_KEY)
+        let noteToSelect: string | null = null
+
+        // Verifica se a nota salva ainda existe
+        if (savedNoteId && data.some((note) => note.id === savedNoteId)) {
+          noteToSelect = savedNoteId
+        } else {
+          // Fallback para a primeira nota
+          noteToSelect = data[0]?.id ?? null
+        }
+
+        setSelectedId(noteToSelect)
+
+        // Inicializa os drafts com a nota selecionada
+        const selectedNote = data.find((note) => note.id === noteToSelect)
+        if (selectedNote) {
+          setDraftTitle(selectedNote.title)
           setDraftContentJson(
-            (data[0].content_json ?? createDefaultContent()) as Record<string, unknown>
+            (selectedNote.content_json ?? createDefaultContent()) as Record<string, unknown>
           )
-          setDraftContentText(data[0].content_text ?? '')
+          setDraftContentText(selectedNote.content_text ?? '')
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar notas.')
@@ -99,6 +125,13 @@ const AppPage = () => {
 
     loadNotes()
   }, [user])
+
+  // 🔧 NOVO: Persiste a nota selecionada no localStorage
+  useEffect(() => {
+    if (selectedId) {
+      localStorage.setItem(SELECTED_NOTE_KEY, selectedId)
+    }
+  }, [selectedId])
 
   useEffect(() => {
     if (!selectedNote) {
@@ -217,7 +250,14 @@ const AppPage = () => {
       setNotes((prev) => {
         const updated = prev.filter((note) => note.id !== noteId)
         if (selectedId === noteId) {
-          setSelectedId(updated[0]?.id ?? null)
+          const newSelectedId = updated[0]?.id ?? null
+          setSelectedId(newSelectedId)
+          // 🔧 CORREÇÃO: Limpa o localStorage se não houver mais notas, ou atualiza com a nova seleção
+          if (newSelectedId) {
+            localStorage.setItem(SELECTED_NOTE_KEY, newSelectedId)
+          } else {
+            localStorage.removeItem(SELECTED_NOTE_KEY)
+          }
         }
         return updated
       })

@@ -14,29 +14,54 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+// Mock user for development mode
+const DEV_USER: User = {
+  id: 'dev-user',
+  aud: 'authenticated',
+  role: 'authenticated',
+  email: 'dev@scribere.local',
+  email_confirmed_at: new Date().toISOString(),
+  phone: '',
+  confirmed_at: new Date().toISOString(),
+  last_sign_in_at: new Date().toISOString(),
+  app_metadata: { provider: 'dev', providers: ['dev'] },
+  user_metadata: { name: 'Dev User' },
+  identities: [],
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(isSupabaseConfigured)
-  const [error, setError] = useState<string | null>(
-    isSupabaseConfigured ? null : 'Supabase não configurado. Verifique o .env.local.'
-  )
+  const [error, setError] = useState<string | null>(isSupabaseConfigured ? null : null)
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
+      // Development mode with mock user
+      setUser(DEV_USER)
+      setSession(null)
+      setError(null)
+      setLoading(false)
       return undefined
     }
 
     const client = supabase
 
     const bootstrap = async () => {
-      const { data, error: sessionError } = await client.auth.getSession()
-      if (sessionError) {
-        setError(sessionError.message)
+      try {
+        const { data, error: sessionError } = await client.auth.getSession()
+        if (sessionError) {
+          setError(sessionError.message)
+        }
+        setSession(data.session)
+        setUser(data.session?.user ?? null)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar sessão.')
+      } finally {
+        setLoading(false)
       }
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
-      setLoading(false)
     }
 
     bootstrap()

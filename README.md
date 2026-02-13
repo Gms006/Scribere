@@ -47,12 +47,13 @@ VITE_APP_NAME=Scribere
 
 ```
 src/
+  assets/            # Assets estáticos (SVGs)
   components/        # UI reutilizável (Toast, NoteEditor)
   context/           # AuthProvider e sessão
   lib/               # Supabase client + APIs
   pages/             # /login e /app
   routes/            # React Router
-  types/             # Tipos compartilhados
+  types/             # Tipos compartilhados + declarações TipTap
 supabase/            # SQL e políticas (RLS)
 ```
 

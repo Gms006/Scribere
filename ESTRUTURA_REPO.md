@@ -5,9 +5,13 @@
 ```
 .
 ├── .env.example
+├── .env.local
+├── .gitattributes
 ├── .gitignore
 ├── .prettierignore
 ├── .prettierrc
+├── .vscode
+│   └── settings.json
 ├── ESTRUTURA_REPO.md
 ├── FLUXO_DESENVOLVIMENTO.md
 ├── README.md
@@ -40,7 +44,8 @@
 │   ├── routes
 │   │   └── AppRouter.tsx
 │   └── types
-│       └── notes.ts
+│       ├── notes.ts
+│       └── tiptap.d.ts
 ├── supabase
 │   └── notes.sql
 ├── tailwind.config.js
