@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
-import { Extension, Mark, mergeAttributes } from '@tiptap/core'
+import { Extension, Mark, markInputRule, mergeAttributes } from '@tiptap/core'
 import type { CommandProps } from '@tiptap/core'
 import { exitCode, newlineInCode } from '@tiptap/pm/commands'
 import StarterKit from '@tiptap/starter-kit'
@@ -27,6 +27,7 @@ import {
   AlignRight,
   AlignJustify,
   CaseSensitive,
+  Phone,
 } from 'lucide-react'
 
 type NoteEditorProps = {
@@ -269,6 +270,71 @@ const Subscript = Mark.create({
   },
 })
 
+// Regex para detectar números de telefone brasileiros ao digitar.
+// Exemplos reconhecidos (seguidos de espaço):
+//   +55 (62) 99999-9999   (62) 99999-9999   62 99999-9999
+//   99999-9999   9999-9999   +5562999999999
+const PHONE_INPUT_REGEX =
+  /(\+?(?:55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}[-\s]?\d{4})\s$/
+
+const PhoneLink = Mark.create({
+  name: 'phoneLink',
+
+  addAttributes() {
+    return {
+      phone: {
+        default: null,
+        parseHTML: (element) => {
+          const href = element.getAttribute('href') ?? ''
+          return href.replace('tel:', '')
+        },
+        renderHTML: (attributes) =>
+          attributes.phone ? { href: `tel:${attributes.phone}` } : {},
+      },
+    }
+  },
+
+  parseHTML() {
+    return [{ tag: 'a[href^="tel:"]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'a',
+      mergeAttributes(HTMLAttributes, { class: 'phone-link' }),
+      0,
+    ]
+  },
+
+  addInputRules() {
+    return [
+      markInputRule({
+        find: PHONE_INPUT_REGEX,
+        type: this.type,
+        // Remove formatação para deixar o href limpo: +5562999999999
+        getAttributes: (match) => ({
+          phone: match[1].replace(/[\s()\-]/g, ''),
+        }),
+      }),
+    ]
+  },
+
+  addCommands() {
+    return {
+      setPhoneLink:
+        (phone: string) =>
+        ({ chain }: CommandProps) =>
+          chain()
+            .setMark('phoneLink', { phone: phone.replace(/[\s()\-]/g, '') })
+            .run(),
+      unsetPhoneLink:
+        () =>
+        ({ chain }: CommandProps) =>
+          chain().unsetMark('phoneLink').run(),
+    }
+  },
+})
+
 const CustomTaskItem = TaskItem.extend({
   parseHTML() {
     return [
@@ -399,6 +465,7 @@ const NoteEditor = ({
       HighlightMark,
       Superscript,
       Subscript,
+      PhoneLink,
       Table.configure({
         resizable: true,
       }),
@@ -427,7 +494,7 @@ const NoteEditor = ({
       editorProps: {
         attributes: {
           class:
-            'prose prose-sm max-w-none min-h-[360px] rounded-xl px-4 py-3 text-sm leading-6 text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+            'prose prose-sm max-w-none min-h-[360px] rounded-xl px-4 py-3 text-sm leading-6 text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 overflow-x-hidden',
         },
       },
       onUpdate: ({ editor: updatedEditor }) => {
@@ -784,6 +851,31 @@ const NoteEditor = ({
           >
             ☑
           </button>
+
+          {/* Botão de telefone: aplica/remove o mark no texto selecionado */}
+          <button
+            title={editor.isActive('phoneLink') ? 'Remover telefone' : 'Marcar como telefone'}
+            className={`flex h-7 w-8 items-center justify-center rounded-lg border transition ${
+              editor.isActive('phoneLink')
+                ? 'border-brand-500 bg-brand-50 text-brand-600'
+                : 'border-slate-200 text-ink-700 hover:bg-slate-100'
+            }`}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              if (editor.isActive('phoneLink')) {
+                editor.chain().focus().unsetPhoneLink().run()
+              } else {
+                const { from, to } = editor.state.selection
+                const selectedText = editor.state.doc.textBetween(from, to)
+                if (selectedText.trim()) {
+                  editor.chain().focus().setPhoneLink(selectedText).run()
+                }
+              }
+            }}
+          >
+            <Phone className="h-3.5 w-3.5" />
+          </button>
+
           <div className="table-menu">
             <button className="table-menu-toggle" type="button">
               Tabela
@@ -888,14 +980,14 @@ const NoteEditor = ({
         .table-menu-action.danger { color: #b91c1c; border-color: #fecaca; }
         .table-menu-action.danger:hover { background: #fef2f2; }
         .prose mark { color: inherit; }
-        .inline-code-group { display: inline-flex; align-items: center; gap: 0.25rem; }
-        .inline-code-text { background-color: #f1f5f9; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.9em; }
+        .inline-code-group { display: inline-flex; align-items: center; gap: 0.25rem; max-width: 480px; vertical-align: middle; min-width: 0; }
+        .inline-code-text { background-color: #f1f5f9; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.9em; white-space: nowrap; overflow-x: auto; max-width: 100%; display: block; min-width: 0; }
         .inline-code-copy { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background-color: #e2e8f0; border-radius: 0.25rem; border: 1px solid #cbd5e1; cursor: pointer; transition: background-color 0.2s; color: #0f172a; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; background-size: 10px 10px; }
         .inline-code-copy:hover { background-color: #cbd5e1; }
-        .code-block-wrapper { position: relative; margin: 0.75rem 0; max-width: 100%; overflow: hidden; }
+        .code-block-wrapper { position: relative; margin: 0.75rem 0; width: 100%; overflow-x: auto; }
         .code-block-copy { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; background-color: #e2e8f0; border-radius: 0.375rem; border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.2s; z-index: 10; color: #0f172a; background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; background-size: 14px 14px; }
         .code-block-copy:hover { background-color: #cbd5e1; border-color: #94a3b8; }
-        .prose .code-block-wrapper pre.code-block { background-color: #f1f5f9; color: #0f172a; padding: 1rem; padding-top: 2.5rem; border-radius: 0.5rem; font-family: monospace; white-space: pre; overflow-x: auto; max-width: 100%; overflow-y: hidden; margin: 0; display: block; }
+        .prose .code-block-wrapper pre.code-block { background-color: #f1f5f9; color: #0f172a; padding: 1rem; padding-top: 2.5rem; border-radius: 0.5rem; font-family: monospace; white-space: pre; overflow-x: visible; width: max-content; min-width: 100%; overflow-y: hidden; margin: 0; display: block; }
         .prose .code-block-wrapper pre.code-block code { background: none; color: inherit; padding: 0; font-size: 0.9em; }
         .prose table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
         .prose th, .prose td { border: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; text-align: left; vertical-align: top; position: relative; }
@@ -903,6 +995,17 @@ const NoteEditor = ({
         .prose .tableWrapper { overflow-x: auto; }
         .prose .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: #cbd5e1; }
         .prose .resize-cursor { cursor: col-resize; }
+
+        /* PHONE LINK */
+        .prose a.phone-link {
+          color: #0ea5e9;
+          text-decoration: underline;
+          text-underline-offset: 2px;
+          cursor: pointer;
+        }
+        .prose a.phone-link:hover {
+          color: #0284c7;
+        }
         
         /* CHECKLIST STYLES - VERSÃO FINAL CORRIGIDA */
         .prose ul[data-type="taskList"] { 

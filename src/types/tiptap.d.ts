@@ -19,5 +19,9 @@ declare module '@tiptap/core' {
     subscript: {
       toggleSubscript: () => ReturnType
     }
+    phoneLink: {
+      setPhoneLink: (phone: string) => ReturnType
+      unsetPhoneLink: () => ReturnType
+    }
   }
 }

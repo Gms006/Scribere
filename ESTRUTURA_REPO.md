@@ -23,7 +23,6 @@
 ├── public
 │   └── vite.svg
 ├── src
-│   ├── App.tsx
 │   ├── assets
 │   │   └── react.svg
 │   ├── components
