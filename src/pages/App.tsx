@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import NoteEditor from '@/components/NoteEditor'
 import ContactsView from '@/components/ContactsView'
@@ -21,6 +22,7 @@ type Tab = 'notes' | 'contacts'
 
 const AppPage = () => {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
 
   // ── Tab ───────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<Tab>('notes')
@@ -58,7 +60,7 @@ const AppPage = () => {
 
   const selectedNote = useMemo(
     () => notes.find((note) => note.id === selectedId) ?? null,
-    [notes, selectedId],
+    [notes, selectedId]
   )
 
   const filteredNotes = useMemo(() => {
@@ -97,7 +99,7 @@ const AppPage = () => {
         setLoading(true)
         setError(null)
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Tempo limite excedido ao carregar notas.')), 10000),
+          setTimeout(() => reject(new Error('Tempo limite excedido ao carregar notas.')), 10000)
         )
         const data = await Promise.race([listNotes(user.id), timeoutPromise])
         setNotes(data)
@@ -109,7 +111,7 @@ const AppPage = () => {
         if (noteToSelect) {
           setDraftTitle(noteToSelect.title)
           setDraftContentJson(
-            (noteToSelect.content_json ?? createDefaultContent()) as Record<string, unknown>,
+            (noteToSelect.content_json ?? createDefaultContent()) as Record<string, unknown>
           )
           setDraftContentText(noteToSelect.content_text ?? '')
         }
@@ -228,7 +230,7 @@ const AppPage = () => {
       setSelectedId(newNote.id)
       setDraftTitle(newNote.title)
       setDraftContentJson(
-        (newNote.content_json ?? createDefaultContent()) as Record<string, unknown>,
+        (newNote.content_json ?? createDefaultContent()) as Record<string, unknown>
       )
       setDraftContentText(newNote.content_text ?? '')
     } catch {
@@ -292,6 +294,13 @@ const AppPage = () => {
               type="button"
             >
               Agenda
+            </button>
+            <button
+              className="rounded-lg px-5 py-1.5 text-xs font-semibold text-ink-400 transition hover:text-ink-700"
+              onClick={() => navigate('/guias')}
+              type="button"
+            >
+              Guias de processo
             </button>
           </div>
 
@@ -417,12 +426,7 @@ const AppPage = () => {
           </>
         ) : (
           // Contacts tab — ContactsView owns its own aside + main
-          user && (
-            <ContactsView
-              userId={user.id}
-              onToast={(message) => setToast(message)}
-            />
-          )
+          user && <ContactsView userId={user.id} onToast={(message) => setToast(message)} />
         )}
       </div>
 

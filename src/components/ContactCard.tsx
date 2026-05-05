@@ -50,7 +50,7 @@ const ContactCard = ({ contact, onEdit, onDelete, onCopy }: ContactCardProps) =>
       navigator.clipboard.writeText(value)
       onCopy(`${label} copiado!`)
     },
-    [onCopy],
+    [onCopy]
   )
 
   const sectorStyle = getSectorStyle(contact.sector)
@@ -69,9 +69,7 @@ const ContactCard = ({ contact, onEdit, onDelete, onCopy }: ContactCardProps) =>
             {/* Name + role */}
             <div>
               <h2 className="text-base font-semibold text-ink-900 leading-tight">{contact.name}</h2>
-              {contact.role && (
-                <p className="mt-0.5 text-xs text-ink-500">{contact.role}</p>
-              )}
+              {contact.role && <p className="mt-0.5 text-xs text-ink-500">{contact.role}</p>}
             </div>
           </div>
           {/* Actions */}
@@ -137,7 +135,7 @@ const ContactCard = ({ contact, onEdit, onDelete, onCopy }: ContactCardProps) =>
                     </span>
                   )}
                   <a
-                    href={`tel:${p.number.replace(/[\s()\-]/g, '')}`}
+                    href={`tel:${p.number.replace(/[\s()-]/g, '')}`}
                     className="contact-link phone-link flex-1 text-xs font-medium"
                     title="Clique para copiar · Ctrl+clique para ligar"
                     onClick={(e) => handleContactLinkClick(e, p.number, 'Telefone')}

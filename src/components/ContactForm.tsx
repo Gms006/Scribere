@@ -17,10 +17,10 @@ const ContactForm = ({ contact, onSave, onCancel }: ContactFormProps) => {
   const [municipality, setMunicipality] = useState(contact?.municipality ?? '')
   const [sector, setSector] = useState(contact?.sector ?? '')
   const [phones, setPhones] = useState<PhoneEntry[]>(
-    contact?.phones.length ? contact.phones : [emptyPhone()],
+    contact?.phones.length ? contact.phones : [emptyPhone()]
   )
   const [emails, setEmails] = useState<EmailEntry[]>(
-    contact?.emails.length ? contact.emails : [emptyEmail()],
+    contact?.emails.length ? contact.emails : [emptyEmail()]
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -141,7 +141,10 @@ const ContactForm = ({ contact, onSave, onCancel }: ContactFormProps) => {
                   value={p.number}
                   onChange={(e) => setPhone(i, 'number', e.target.value)}
                 />
-                <label className="flex items-center gap-1 cursor-pointer select-none flex-shrink-0" title="WhatsApp?">
+                <label
+                  className="flex items-center gap-1 cursor-pointer select-none flex-shrink-0"
+                  title="WhatsApp?"
+                >
                   <input
                     type="checkbox"
                     className="h-3.5 w-3.5 accent-green-500"

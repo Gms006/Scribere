@@ -70,16 +70,16 @@ const ContactsView = ({ userId, onToast }: ContactsViewProps) => {
             c.municipality
               .split(',')
               .map((m) => m.trim())
-              .filter(Boolean),
-          ),
+              .filter(Boolean)
+          )
         ),
       ].sort(),
-    [contacts],
+    [contacts]
   )
 
   const sectors = useMemo(
     () => [...new Set(contacts.map((c) => c.sector).filter(Boolean))].sort(),
-    [contacts],
+    [contacts]
   )
 
   const filteredContacts = useMemo(() => {
@@ -125,7 +125,7 @@ const ContactsView = ({ userId, onToast }: ContactsViewProps) => {
 
   const selectedContact = useMemo(
     () => contacts.find((c) => c.id === selectedId) ?? null,
-    [contacts, selectedId],
+    [contacts, selectedId]
   )
 
   // ── CRUD handlers ─────────────────────────────────────────────────────────
@@ -169,7 +169,10 @@ const ContactsView = ({ userId, onToast }: ContactsViewProps) => {
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Agenda</p>
           <button
             className="rounded-lg bg-ink-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-ink-700 transition"
-            onClick={() => { setMode('create'); setSelectedId(null) }}
+            onClick={() => {
+              setMode('create')
+              setSelectedId(null)
+            }}
             type="button"
           >
             <span className="flex items-center gap-1">
@@ -203,7 +206,9 @@ const ContactsView = ({ userId, onToast }: ContactsViewProps) => {
               >
                 <option value="">Todos os municípios</option>
                 {municipalities.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
                 ))}
               </select>
             )}
@@ -215,7 +220,9 @@ const ContactsView = ({ userId, onToast }: ContactsViewProps) => {
               >
                 <option value="">Todos os setores</option>
                 {sectors.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             )}
@@ -249,7 +256,10 @@ const ContactsView = ({ userId, onToast }: ContactsViewProps) => {
                         ? 'border-ink-900 bg-slate-100 text-ink-900'
                         : 'border-slate-200 text-ink-600 hover:bg-slate-50'
                     }`}
-                    onClick={() => { setSelectedId(c.id); setMode('view') }}
+                    onClick={() => {
+                      setSelectedId(c.id)
+                      setMode('view')
+                    }}
                     type="button"
                   >
                     <p className="truncate text-xs font-semibold">{c.name || 'Sem nome'}</p>
@@ -262,9 +272,7 @@ const ContactsView = ({ userId, onToast }: ContactsViewProps) => {
                         </span>
                       )}
                       {c.phones.length > 0 && (
-                        <span className="text-[10px] text-ink-400">
-                          {c.phones.length} tel.
-                        </span>
+                        <span className="text-[10px] text-ink-400">{c.phones.length} tel.</span>
                       )}
                     </div>
                   </button>
@@ -281,7 +289,9 @@ const ContactsView = ({ userId, onToast }: ContactsViewProps) => {
           <ContactForm
             contact={null}
             onSave={handleCreate}
-            onCancel={() => { setMode('view') }}
+            onCancel={() => {
+              setMode('view')
+            }}
           />
         )}
 

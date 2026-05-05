@@ -274,8 +274,7 @@ const Subscript = Mark.create({
 // Exemplos reconhecidos (seguidos de espaço):
 //   +55 (62) 99999-9999   (62) 99999-9999   62 99999-9999
 //   99999-9999   9999-9999   +5562999999999
-const PHONE_INPUT_REGEX =
-  /(\+?(?:55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}[-\s]?\d{4})\s$/
+const PHONE_INPUT_REGEX = /(\+?(?:55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}[-\s]?\d{4})\s$/
 
 const PhoneLink = Mark.create({
   name: 'phoneLink',
@@ -288,8 +287,7 @@ const PhoneLink = Mark.create({
           const href = element.getAttribute('href') ?? ''
           return href.replace('tel:', '')
         },
-        renderHTML: (attributes) =>
-          attributes.phone ? { href: `tel:${attributes.phone}` } : {},
+        renderHTML: (attributes) => (attributes.phone ? { href: `tel:${attributes.phone}` } : {}),
       },
     }
   },
@@ -299,11 +297,7 @@ const PhoneLink = Mark.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return [
-      'a',
-      mergeAttributes(HTMLAttributes, { class: 'phone-link' }),
-      0,
-    ]
+    return ['a', mergeAttributes(HTMLAttributes, { class: 'phone-link' }), 0]
   },
 
   addInputRules() {
@@ -313,7 +307,7 @@ const PhoneLink = Mark.create({
         type: this.type,
         // Remove formatação para deixar o href limpo: +5562999999999
         getAttributes: (match) => ({
-          phone: match[1].replace(/[\s()\-]/g, ''),
+          phone: match[1].replace(/[\s()-]/g, ''),
         }),
       }),
     ]
@@ -325,7 +319,7 @@ const PhoneLink = Mark.create({
         (phone: string) =>
         ({ chain }: CommandProps) =>
           chain()
-            .setMark('phoneLink', { phone: phone.replace(/[\s()\-]/g, '') })
+            .setMark('phoneLink', { phone: phone.replace(/[\s()-]/g, '') })
             .run(),
       unsetPhoneLink:
         () =>
